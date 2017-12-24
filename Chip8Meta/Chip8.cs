@@ -4,6 +4,9 @@ namespace Chip8Meta
 {
     public class Chip8
     {
+        public const int DisplayWidth = 64;
+        public const int DisplayHeight = 32;
+
         private const ushort MemBase = 0x200;
 
         private byte[] _mem;
@@ -21,10 +24,12 @@ namespace Chip8Meta
             _mem = new byte[4096];
             _reg = new byte[16];
             _pc = MemBase;
-            _display = new bool[64 * 32];
+            _display = new bool[DisplayWidth * DisplayHeight];
             _stack = new ushort[16];
             _sp = -1;
         }
+
+        public bool[] Display => _display;
 
         public void Step()
         {
@@ -84,7 +89,7 @@ namespace Chip8Meta
                     var shouldSetPixel = (spriteRow & (0b1000_0000 >> dx)) > 0;
                     if (shouldSetPixel)
                     {
-                        var displayOffset = (y + dy) * 64 + x + dx;
+                        var displayOffset = (y + dy) * DisplayWidth + x + dx;
                         if (_display[displayOffset])
                         {
                             _reg[0xF] = 1;
