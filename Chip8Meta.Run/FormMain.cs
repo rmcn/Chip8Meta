@@ -40,7 +40,11 @@ namespace Chip8Meta.Run
         {
             try
             {
-                _chip8.Step();
+                for(int i = 0 ; i < 10; i++)
+                {
+                    _chip8.Step();
+                }
+                _chip8.Tick();
                 UpdateDisplayBitmap();
                 Refresh();
             }
