@@ -39,6 +39,7 @@ namespace Chip8Meta
         private bool[] _display;
         private ushort[] _stack;
         private int _sp;
+        private bool[] _keys;
 
         public Chip8()
         {
@@ -50,9 +51,11 @@ namespace Chip8Meta
             _stack = new ushort[16];
             _sp = -1;
             _rand = new Random();
+            _keys = new bool[16];
         }
 
         public bool[] Display => _display;
+        public bool[] Keys => _keys;
 
         public void Tick()
         {
@@ -112,8 +115,8 @@ namespace Chip8Meta
                 case 0xE:
                     switch (op.B2)
                     {
-                        // Ex9E - SKP Vx
-                        case 0xA1: if (!IsPressed(_reg[op.N2])) { _pc += 2; } break;// ExA1 - SKNP Vx
+                        case 0x9E: if (IsPressed(_reg[op.N2])) { _pc += 2; } break; // Ex9E - SKP Vx
+                        case 0xA1: if (!IsPressed(_reg[op.N2])) { _pc += 2; } break; // ExA1 - SKNP Vx
                         default: throw new NotImplementedException($"Unknown instruction {op}");
                     }
                     break;
@@ -138,7 +141,7 @@ namespace Chip8Meta
 
         private bool IsPressed(byte v)
         {
-            return false;
+            return _keys[v];
         }
 
         private void Bcd(byte v)
@@ -160,14 +163,17 @@ namespace Chip8Meta
                     if (shouldSetPixel)
                     {
                         var displayOffset = (y + dy) * DisplayWidth + x + dx;
-                        if (_display[displayOffset])
+                        if (displayOffset < _display.Length && displayOffset >=0)
                         {
-                            _reg[0xF] = 1;
-                            _display[displayOffset] = false;
-                        }
-                        else
-                        {
-                            _display[displayOffset] = true;
+                            if (_display[displayOffset])
+                            {
+                                _reg[0xF] = 1;
+                                _display[displayOffset] = false;
+                            }
+                            else
+                            {
+                                _display[displayOffset] = true;
+                            }
                         }
                     }
                 }

@@ -83,5 +83,47 @@ namespace Chip8Meta.Run
 
             _display.UnlockBits(bData);
         }
+
+        private int? KeyToValue(Keys key)
+        {
+            switch (key)
+            {
+                case Keys.D1: return 0x1;
+                case Keys.D2: return 0x2;
+                case Keys.D3: return 0x3;
+                case Keys.D4: return 0xC;
+                case Keys.Q: return 0x4;
+                case Keys.W: return 0x5;
+                case Keys.E: return 0x6;
+                case Keys.R: return 0xD;
+                case Keys.A: return 0x7;
+                case Keys.S: return 0x8;
+                case Keys.D: return 0x9;
+                case Keys.F: return 0xE;
+                case Keys.Z: return 0xA;
+                case Keys.X: return 0x0;
+                case Keys.C: return 0xB;
+                case Keys.V: return 0xF;
+                default: return null;
+            }
+        }
+
+        private void FormMain_KeyDown(object sender, KeyEventArgs e)
+        {
+            var value = KeyToValue(e.KeyCode);
+            if (value.HasValue)
+            {
+                _chip8.Keys[value.Value] = true;
+            }
+        }
+
+        private void FormMain_KeyUp(object sender, KeyEventArgs e)
+        {
+            var value = KeyToValue(e.KeyCode);
+            if (value.HasValue)
+            {
+                _chip8.Keys[value.Value] = false;
+            }
+        }
     }
 }
