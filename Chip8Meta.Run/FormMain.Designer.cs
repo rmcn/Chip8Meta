@@ -40,7 +40,6 @@
             // 
             // _timer
             // 
-            this._timer.Enabled = true;
             this._timer.Interval = 16;
             this._timer.Tick += new System.EventHandler(this._timer_Tick);
             // 

@@ -25,7 +25,21 @@ namespace Chip8Meta.Run
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            _chip8.Load(File.ReadAllBytes("Game.ch8"));
+            TryLoadFile(Properties.Settings.Default.FilePath);
+        }
+
+        private void TryLoadFile(string filename)
+        {
+            try
+            {
+                _chip8.Load(File.ReadAllBytes(filename));
+                _timer.Enabled = true;
+                Properties.Settings.Default.FilePath = filename;
+                Properties.Settings.Default.Save();
+            }
+            catch
+            {
+            }
         }
 
         private void FormMain_Paint(object sender, PaintEventArgs e)
@@ -136,7 +150,7 @@ namespace Chip8Meta.Run
         {
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                _chip8.Load(File.ReadAllBytes(openFileDialog.FileName));
+                TryLoadFile(openFileDialog.FileName);
             }
         }
     }
