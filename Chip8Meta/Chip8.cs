@@ -80,26 +80,25 @@ namespace Chip8Meta
                 case 0x0:
                     switch(op.B2)
                     {
-                        // 00E0 - CLS
-                        case 0xEE: _pc = _stack[_sp]; _sp--; break; // 00EE - RET
-                        // 0nnn - SYS addr
-                        default: throw new NotImplementedException($"Unknown instruction {op}");
+                        case 0xE0: Array.Clear(_display, 0, _display.Length); break; // 00E0 - CLS
+                        case 0xEE: _pc = _stack[_sp]; _sp--; break; // 00EE - RET                      
+                        default: break; // 0nnn - SYS addr - noop on emulator
                     }
                     break;
                 case 0x1: _pc = op.Addr; break; // 1nnn - JP addr
                 case 0x2: _sp++; _stack[_sp] = _pc; _pc = op.Addr; break; // 2nnn - CALL addr
                 case 0x3: if (_reg[op.N2] == op.B2) { _pc += 2; }; break; // 3xkk - SE Vx, byte
                 case 0x4: if (_reg[op.N2] != op.B2) { _pc += 2; }; break; // 4xkk - SNE Vx, byte
-                // 5xy0 - SE Vx, Vy
+                case 0x5: if (_reg[op.N2] == _reg[op.N3]) { _pc += 2; }; break; // 5xy0 - SE Vx, Vy
                 case 0x6: _reg[op.N2] = op.B2; break; // 6xkk - LD Vx, byte
                 case 0x7: _reg[op.N2] += op.B2; break; // 7xkk - ADD Vx, byte
                 case 0x8:
                     switch (op.N4)
                     {
                         case 0x0: _reg[op.N2] = _reg[op.N3]; break; // 8xy0 - LD Vx, Vy
-                        // 8xy1 - OR Vx, Vy
-                        case 0x2:  _reg[op.N2] = (byte)(_reg[op.N2] & _reg[op.N3]); break; // 8xy2 - AND Vx, Vy
-                        // 8xy3 - XOR Vx, Vy
+                        case 0x1: _reg[op.N2] = (byte)(_reg[op.N2] | _reg[op.N3]); break; // 8xy1 - OR Vx, Vy
+                        case 0x2: _reg[op.N2] = (byte)(_reg[op.N2] & _reg[op.N3]); break; // 8xy2 - AND Vx, Vy
+                        case 0x3: _reg[op.N2] = (byte)(_reg[op.N2] ^ _reg[op.N3]); break; // 8xy3 - XOR Vx, Vy
                         case 0x4: // 8xy4 - ADD Vx, Vy
                             _reg[0xf] = _reg[op.N2] + _reg[op.N3] < 256 ? (byte)0 : (byte)1;
                             _reg[op.N2] = (byte)(_reg[op.N2] + _reg[op.N3]);
@@ -108,15 +107,24 @@ namespace Chip8Meta
                             _reg[0xf] = _reg[op.N2] - _reg[op.N3] < 0 ? (byte)0 : (byte)1;
                             _reg[op.N2] = (byte)(_reg[op.N2] - _reg[op.N3]);
                             break;                        
-                        // 8xy6 - SHR Vx {, Vy}
-                        // 8xy7 - SUBN Vx, Vy
-                        // 8xyE - SHL Vx {, Vy}
+                        case 0x6: // 8xy6 - SHR Vx {, Vy}
+                            _reg[0xf] = (_reg[op.N2] & 1) == 0 ? (byte)0 : (byte)1;
+                            _reg[op.N2] = (byte)(_reg[op.N2] >> 1);
+                            break;
+                        case 0x7: // 8xy7 - SUBN Vx, Vy
+                            _reg[0xf] = _reg[op.N3] - _reg[op.N2] < 0 ? (byte)0 : (byte)1;
+                            _reg[op.N2] = (byte)(_reg[op.N3] - _reg[op.N2]);
+                            break;            
+                        case 0xE: // 8xyE - SHL Vx {, Vy}
+                            _reg[0xf] = (_reg[op.N2] & 0b1000_0000) == 0 ? (byte)0 : (byte)1;
+                            _reg[op.N2] = (byte)(_reg[op.N2] << 1);
+                            break;
                         default: throw new NotImplementedException($"Unknown instruction {op}");
                     }
                     break;
-                // 9xy0 - SNE Vx, Vy
+                case 0x9: if (_reg[op.N2] != _reg[op.N3]) { _pc += 2; }; break; // 9xy0 - SNE Vx, Vy
                 case 0xA: _i = op.Addr; break; // Annn - LD I, addr
-                // Bnnn - JP V0, addr
+                case 0xB: _pc = (ushort)(op.Addr + _reg[0]); break; // Bnnn - JP V0, addr
                 case 0xC: _reg[op.N2] = (byte)(_rand.Next(256) & op.B2); break; // Cxkk - RND Vx, byte
                 case 0xD: Draw(_reg[op.N2], _reg[op.N3], op.N4); break; // Dxyn - DRW Vx, Vy, nibble
                 case 0xE:
@@ -131,19 +139,32 @@ namespace Chip8Meta
                     switch(op.B2)
                     {
                         case 0x07: _reg[op.N2] = _delay; break; // Fx07 - LD Vx, DT
-                        // Fx0A - LD Vx, K
+                        case 0x0A: if (!GetKey(op)) { _pc -= 2; } break; // Fx0A - LD Vx, K
                         case 0x15: _delay = _reg[op.N2]; break; // Fx15 - LD DT, Vx
                         case 0x18: _sound = _reg[op.N2]; break; // Fx18 - LD ST, Vx
-                        // Fx1E - ADD I, Vx
+                        case 0x1E: _i += _reg[op.N2]; break; // Fx1E - ADD I, Vx
                         case 0x29: _i = (byte)(_reg[op.N2] * 5); break; // Fx29 - LD F, Vx
                         case 0x33: Bcd(_reg[op.N2]); break; // Fx33 - LD B, Vx
-                        // Fx55 - LD [I], Vx
+                        case 0x55: for (int i = 0; i <= op.N2; i++) { _mem[_i + i] = _reg[i]; }; break; // Fx55 - LD [I], Vx
                         case 0x65: for (int i = 0; i <= op.N2; i++) { _reg[i] = _mem[_i + i]; }; break; // Fx65 - LD Vx, [I]
                         default: throw new NotImplementedException($"Unknown instruction {op}");
                     }
                     break;
                 default: throw new NotImplementedException($"Unknown instruction {op}");
             }
+        }
+
+        private bool GetKey(Instruction op)
+        {
+            for (byte i = 0; i < _keys.Length; i++)
+            {
+                if (_keys[i])
+                {
+                    _reg[op.N2] = i;
+                    return true;
+                }
+            }
+            return false;
         }
 
         private bool IsPressed(byte v)
