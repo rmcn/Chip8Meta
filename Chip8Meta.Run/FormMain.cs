@@ -12,6 +12,8 @@ namespace Chip8Meta.Run
 {
     public partial class FormMain : Form
     {
+        private const string AppName = "Chip8";
+
         private Chip8 _chip8;
         private Bitmap _display;
 
@@ -34,11 +36,14 @@ namespace Chip8Meta.Run
             {
                 _chip8.Load(File.ReadAllBytes(filename));
                 _timer.Enabled = true;
+                Text = Path.GetFileNameWithoutExtension(filename) + $" - {AppName}";
                 Properties.Settings.Default.FilePath = filename;
                 Properties.Settings.Default.Save();
             }
-            catch
+            catch(Exception ex)
             {
+                Text = AppName;
+                Error(ex);
             }
         }
 
@@ -63,10 +68,16 @@ namespace Chip8Meta.Run
                 UpdateDisplayBitmap();
                 Refresh();
             }
-            catch
+            catch(Exception ex)
             {
                 _timer.Enabled = false;
+                Error(ex);
             }
+        }
+
+        private void Error(Exception ex)
+        {
+            MessageBox.Show(ex.Message, AppName, MessageBoxButtons.OK, MessageBoxIcon.Stop);
         }
 
         private unsafe void UpdateDisplayBitmap()
