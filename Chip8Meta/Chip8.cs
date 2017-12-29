@@ -43,6 +43,11 @@ namespace Chip8Meta
 
         public Chip8()
         {
+            Reset();
+        }
+
+        private void Reset()
+        {
             _mem = new byte[4096];
             Digits.CopyTo(_mem, 0);
             _reg = new byte[16];
@@ -52,6 +57,8 @@ namespace Chip8Meta
             _sp = -1;
             _rand = new Random();
             _keys = new bool[16];
+            _delay = 0;
+            _sound = 0;
         }
 
         public bool[] Display => _display;
@@ -182,6 +189,7 @@ namespace Chip8Meta
 
         public void Load(byte[] data)
         {
+            Reset();
             data.CopyTo(_mem, MemBase);
         }
     }

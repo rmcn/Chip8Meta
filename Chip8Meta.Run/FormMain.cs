@@ -30,10 +30,11 @@ namespace Chip8Meta.Run
 
         private void FormMain_Paint(object sender, PaintEventArgs e)
         {
+            var clientHeight = ClientSize.Height - menuStrip.Height;
             e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
-            int scale = Math.Min(ClientSize.Width / _display.Width, ClientSize.Height / _display.Height);
+            int scale = Math.Min(ClientSize.Width / _display.Width, clientHeight / _display.Height);
             e.Graphics.DrawImage(_display,
-                new Rectangle(0, 0, _display.Width * scale, _display.Height * scale));
+                new Rectangle(0, menuStrip.Height, _display.Width * scale, _display.Height * scale));
         }
 
         private void _timer_Tick(object sender, EventArgs e)
@@ -123,6 +124,19 @@ namespace Chip8Meta.Run
             if (value.HasValue)
             {
                 _chip8.Keys[value.Value] = false;
+            }
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                _chip8.Load(File.ReadAllBytes(openFileDialog.FileName));
             }
         }
     }
